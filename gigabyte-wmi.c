@@ -24,7 +24,7 @@ struct gigabyte_wmi_args {
 	u32 arg1;
 };
 
-static acpi_status gigabyte_wmi_perform_query(enum gigabyte_wmi_commandtype command,
+static int gigabyte_wmi_perform_query(enum gigabyte_wmi_commandtype command,
 		struct gigabyte_wmi_args *args, struct acpi_buffer *out)
 {
 	const struct acpi_buffer in = {
@@ -32,7 +32,12 @@ static acpi_status gigabyte_wmi_perform_query(enum gigabyte_wmi_commandtype comm
 		.pointer = args,
 	};
 
-	return wmi_evaluate_method(GIGABYTE_WMI_GUID, 0x0, command, &in, out);
+	acpi_status ret = wmi_evaluate_method(GIGABYTE_WMI_GUID, 0x0, command, &in, out);
+	if (ret == AE_OK) {
+		return 0;
+	} else {
+		return -EIO;
+	};
 }
 
 static int gigabyte_wmi_query_integer(enum gigabyte_wmi_commandtype command,
@@ -40,18 +45,22 @@ static int gigabyte_wmi_query_integer(enum gigabyte_wmi_commandtype command,
 {
 	union acpi_object *obj;
 	struct acpi_buffer result = { ACPI_ALLOCATE_BUFFER, NULL };
-	acpi_status ret;
+	int ret;
 
 	ret = gigabyte_wmi_perform_query(command, args, &result);
-	if (ACPI_FAILURE(ret))
-		return -ENXIO;
-	obj = result.pointer;
-	if (!obj || obj->type != ACPI_TYPE_INTEGER) {
-		pr_warn("Unexpected result type %d for command %d", obj->type, command);
-		return -ENXIO;
+	if (ret) {
+		goto out;
 	}
-	*res = obj->integer.value;
-	return AE_OK;
+	obj = result.pointer;
+	if (obj && obj->type == ACPI_TYPE_INTEGER) {
+		*res = obj->integer.value;
+		ret = 0;
+	} else {
+		ret = -EIO;
+	}
+out:
+	kfree(result.pointer);
+	return ret;
 }
 
 static int gigabyte_wmi_temperature(u8 sensor, long *res)
