@@ -24,7 +24,7 @@ struct gigabyte_wmi_args {
 };
 
 static int gigabyte_wmi_perform_query(enum gigabyte_wmi_commandtype command,
-		struct gigabyte_wmi_args *args, struct acpi_buffer *out)
+				      struct gigabyte_wmi_args *args, struct acpi_buffer *out)
 {
 	const struct acpi_buffer in = {
 		.length = sizeof(*args),
@@ -32,24 +32,23 @@ static int gigabyte_wmi_perform_query(enum gigabyte_wmi_commandtype command,
 	};
 
 	acpi_status ret = wmi_evaluate_method(GIGABYTE_WMI_GUID, 0x0, command, &in, out);
-	if (ret == AE_OK) {
+
+	if (ret == AE_OK)
 		return 0;
-	} else {
+	else
 		return -EIO;
-	};
 }
 
 static int gigabyte_wmi_query_integer(enum gigabyte_wmi_commandtype command,
-		struct gigabyte_wmi_args *args, u64 *res)
+				      struct gigabyte_wmi_args *args, u64 *res)
 {
 	union acpi_object *obj;
 	struct acpi_buffer result = { ACPI_ALLOCATE_BUFFER, NULL };
 	int ret;
 
 	ret = gigabyte_wmi_perform_query(command, args, &result);
-	if (ret) {
+	if (ret)
 		goto out;
-	}
 	obj = result.pointer;
 	if (obj && obj->type == ACPI_TYPE_INTEGER) {
 		*res = obj->integer.value;
@@ -72,30 +71,30 @@ static int gigabyte_wmi_temperature(u8 sensor, long *res)
 
 	ret = gigabyte_wmi_query_integer(GIGABYTE_WMI_TEMPERATURE_QUERY, &args, &temp);
 	if (ret == 0)
-		*res = (s8) temp * 1000; // value is a signed 8-bit integer
+		*res = (s8)temp * 1000; // value is a signed 8-bit integer
 	return ret;
 }
 
 static int gigabyte_wmi_hwmon_read(struct device *dev, enum hwmon_sensor_types type,
-		u32 attr, int channel, long *val)
+				   u32 attr, int channel, long *val)
 {
 	return gigabyte_wmi_temperature(channel, val);
 }
 
 static umode_t gigabyte_wmi_hwmon_is_visible(const void *data, enum hwmon_sensor_types type,
-		u32 attr, int channel)
+					     u32 attr, int channel)
 {
 	return 0444;
 }
 
 static const struct hwmon_channel_info *gigabyte_wmi_hwmon_info[] = {
 	HWMON_CHANNEL_INFO(temp,
-			HWMON_T_INPUT,
-			HWMON_T_INPUT,
-			HWMON_T_INPUT,
-			HWMON_T_INPUT,
-			HWMON_T_INPUT,
-			HWMON_T_INPUT),
+			   HWMON_T_INPUT,
+			   HWMON_T_INPUT,
+			   HWMON_T_INPUT,
+			   HWMON_T_INPUT,
+			   HWMON_T_INPUT,
+			   HWMON_T_INPUT),
 	NULL,
 };
 
