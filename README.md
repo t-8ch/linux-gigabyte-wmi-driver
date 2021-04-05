@@ -9,6 +9,9 @@ References:
 * https://lwn.net/Articles/391230/
 * https://uefi.org/specs/ACPI/6.4/19_ASL_Reference/ACPI_Source_Language_Reference.html#indexfield-declare-index-data-fields
 
+Upstreaming:
+* https://lore.kernel.org/platform-driver-x86/20210405132007.290275-1-linux@weissschuh.net/
+
 Open questions:
 * The ASL IndexField does not cover all relevant registers, can it be extended somehow?
 * Not all registers are exposed via ACPI methods, can they be accessed directly?
