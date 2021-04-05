@@ -21,7 +21,7 @@ Open questions:
 
 ## Installation
 
-* `make install`
+* `make`
 * `sudo insmod ./gigabyte-wmi.ko`
 
 ## Testing
