@@ -72,7 +72,7 @@ static int gigabyte_wmi_temperature(u8 sensor, long *res)
 
 	ret = gigabyte_wmi_query_integer(GIGABYTE_WMI_TEMPERATURE_QUERY, &args, &temp);
 	if (ret == 0)
-		*res = temp;
+		*res = (s8) temp * 1000; // value is a signed 8-bit integer
 	return ret;
 }
 
@@ -82,6 +82,12 @@ static int gigabyte_wmi_hwmon_read(struct device *dev, enum hwmon_sensor_types t
 	return gigabyte_wmi_temperature(channel, val);
 }
 
+static umode_t gigabyte_wmi_hwmon_is_visible(const void *data, enum hwmon_sensor_types type,
+		u32 attr, int channel)
+{
+	return 0444;
+}
+
 static const struct hwmon_channel_info *gigabyte_wmi_hwmon_info[] = {
 	HWMON_CHANNEL_INFO(temp,
 			HWMON_T_INPUT,
@@ -89,13 +95,13 @@ static const struct hwmon_channel_info *gigabyte_wmi_hwmon_info[] = {
 			HWMON_T_INPUT,
 			HWMON_T_INPUT,
 			HWMON_T_INPUT,
-			HWMON_T_INPUT
-	),
+			HWMON_T_INPUT),
 	NULL,
 };
 
 static const struct hwmon_ops gigabyte_wmi_hwmon_ops = {
 	.read = gigabyte_wmi_hwmon_read,
+	.is_visible = gigabyte_wmi_hwmon_is_visible,
 };
 
 static const struct hwmon_chip_info gigabyte_wmi_hwmon_chip_info = {
