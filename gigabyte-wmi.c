@@ -43,7 +43,7 @@ static ssize_t temp_show(struct device *dev, struct device_attribute *attr,
 	if (ACPI_FAILURE(res))
 		return -res;
 
-	return sprintf(buf, "%d\n", temp * 1000);
+	return sysfs_emit(buf, "%d\n", temp * 1000);
 }
 
 static SENSOR_DEVICE_ATTR_2_RO(temp1_input, temp, 0, 0);
@@ -56,7 +56,7 @@ static SENSOR_DEVICE_ATTR_2_RO(temp6_input, temp, 0, 5);
 static struct platform_device *gigabyte_wmi_pdev;
 
 
-static struct attribute *gigabyte_wmi_hwmon_attributes_temp[] = {
+static struct attribute *gigabyte_wmi_hwmon_temp_attrs[] = {
 	&sensor_dev_attr_temp1_input.dev_attr.attr,
 	&sensor_dev_attr_temp2_input.dev_attr.attr,
 	&sensor_dev_attr_temp3_input.dev_attr.attr,
@@ -65,15 +65,7 @@ static struct attribute *gigabyte_wmi_hwmon_attributes_temp[] = {
 	&sensor_dev_attr_temp6_input.dev_attr.attr,
 	NULL,
 };
-
-static const struct attribute_group gigabyte_wmi_hwmon_group_temp = {
-	.attrs = gigabyte_wmi_hwmon_attributes_temp,
-};
-
-static const struct attribute_group *gigabyte_wmi_hwmon_groups[] = {
-	&gigabyte_wmi_hwmon_group_temp,
-	NULL,
-};
+ATTRIBUTE_GROUPS(gigabyte_wmi_hwmon_temp);
 
 static int gigabyte_wmi_probe(struct platform_device *pdev)
 {
@@ -86,7 +78,7 @@ static int gigabyte_wmi_probe(struct platform_device *pdev)
 
 	hwmon_dev = devm_hwmon_device_register_with_groups(dev,
 					"gigabyte_wmi",
-					NULL, gigabyte_wmi_hwmon_groups);
+					NULL, gigabyte_wmi_hwmon_temp_groups);
 	return PTR_ERR_OR_ZERO(hwmon_dev);
 }
 
