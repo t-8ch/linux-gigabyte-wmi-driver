@@ -15,3 +15,13 @@ Open questions:
 * Some registers are exposed via ACPI methods but are not reachable directly from the WMI dispatcher.
   * Does ASL have some sort of reflection that could enable those methods?
   * Is it possible to call those methods directly, bypassing WMI?
+
+## Installation
+
+* `make install`
+* `sudo insmode ./gigabyte-wmi.ko`
+
+## Testing
+
+* `cat /sys/devices/platform/gigabyte-wmi/hwmon/hwmon*/temp*input`
+* `sensors`
