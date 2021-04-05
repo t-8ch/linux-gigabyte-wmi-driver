@@ -79,7 +79,6 @@ static int gigabyte_wmi_temperature(u8 sensor, long *res)
 static int gigabyte_wmi_hwmon_read(struct device *dev, enum hwmon_sensor_types type,
 		u32 attr, int channel, long *val)
 {
-	pr_warn("XX hwmon read: %d %u %d", type, attr, channel);
 	return gigabyte_wmi_temperature(channel, val);
 }
 
