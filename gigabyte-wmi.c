@@ -10,7 +10,6 @@
 #include <linux/wmi.h>
 
 #define GIGABYTE_WMI_GUID "DEADBEEF-2001-0000-00A0-C90629100000"
-#define DRVNAME "gigabyte-wmi"
 
 enum gigabyte_wmi_commandtype {
 	GIGABYTE_WMI_BUILD_DATE_QUERY       =   0x1,
@@ -121,7 +120,7 @@ static const struct wmi_device_id gigabyte_wmi_id_table[] = {
 
 static struct wmi_driver gigabyte_wmi_driver = {
 	.driver = {
-		.name = DRVNAME,
+		.name = "gigabyte-wmi",
 	},
 	.id_table = gigabyte_wmi_id_table,
 	.probe = gigabyte_wmi_probe,
