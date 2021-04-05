@@ -4,13 +4,13 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/acpi.h>
+#include <linux/hwmon-sysfs.h>
+#include <linux/hwmon.h>
+#include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/init.h>
-#include <linux/acpi.h>
 #include <linux/platform_device.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
 
 #define GIGABYTE_WMI_GUID "DEADBEEF-2001-0000-00A0-C90629100000"
 #define DRVNAME "gigabyte-wmi"
