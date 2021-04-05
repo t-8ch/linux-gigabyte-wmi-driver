@@ -26,5 +26,5 @@ Open questions:
 
 ## Testing
 
-* `cat /sys/devices/platform/gigabyte-wmi/hwmon/hwmon*/temp*input`
+* `cat /sys/class/wmi_bus/wmi_bus-PNP0C14\:00/DEADBEEF-2001-0000-00A0-C90629100000/hwmon/hwmon*/temp?_input`
 * `sensors`
