@@ -52,7 +52,8 @@ static int gigabyte_wmi_query_integer(enum gigabyte_wmi_commandtype command,
 	obj = result.pointer;
 	if (obj && obj->type == ACPI_TYPE_INTEGER) {
 		*res = obj->integer.value;
-		ret = 0;
+		if (!*res)
+			ret = -ENODEV;
 	} else {
 		ret = -EIO;
 	}
