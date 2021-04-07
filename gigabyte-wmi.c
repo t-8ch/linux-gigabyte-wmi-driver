@@ -50,13 +50,10 @@ static int gigabyte_wmi_query_integer(enum gigabyte_wmi_commandtype command,
 	if (ret)
 		goto out;
 	obj = result.pointer;
-	if (obj && obj->type == ACPI_TYPE_INTEGER) {
+	if (obj && obj->type == ACPI_TYPE_INTEGER)
 		*res = obj->integer.value;
-		if (!*res)
-			ret = -ENODEV;
-	} else {
+	else
 		ret = -EIO;
-	}
 out:
 	kfree(result.pointer);
 	return ret;
@@ -71,8 +68,11 @@ static int gigabyte_wmi_temperature(u8 sensor, long *res)
 	acpi_status ret;
 
 	ret = gigabyte_wmi_query_integer(GIGABYTE_WMI_TEMPERATURE_QUERY, &args, &temp);
-	if (ret == 0)
+	if (ret == 0) {
+		if (!temp)
+			return -ENODEV;
 		*res = (s8)temp * 1000; // value is a signed 8-bit integer
+	}
 	return ret;
 }
 
