@@ -5,12 +5,17 @@
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 #include <linux/acpi.h>
+#include <linux/dmi.h>
 #include <linux/hwmon.h>
 #include <linux/module.h>
 #include <linux/wmi.h>
 
 #define GIGABYTE_WMI_GUID "DEADBEEF-2001-0000-00A0-C90629100000"
 #define NUM_TEMPERATURE_SENSORS 6
+
+static bool force_load;
+module_param(force_load, bool, 0);
+MODULE_PARM_DESC(force_load, "Force loading on non-whitelisted platform");
 
 enum gigabyte_wmi_commandtype {
 	GIGABYTE_WMI_BUILD_DATE_QUERY       =   0x1,
@@ -51,13 +56,12 @@ static int gigabyte_wmi_query_integer(struct wmi_device *wdev,
 
 	ret = gigabyte_wmi_perform_query(wdev, command, args, &result);
 	if (ret)
-		goto out;
+		return ret;
 	obj = result.pointer;
 	if (obj && obj->type == ACPI_TYPE_INTEGER)
 		*res = obj->integer.value;
 	else
 		ret = -EIO;
-out:
 	kfree(result.pointer);
 	return ret;
 }
@@ -126,10 +130,27 @@ static int gigabyte_wmi_validate_sensor_presence(struct wmi_device *wdev)
 	return working_sensors ? 0 : -ENODEV;
 }
 
+static const struct dmi_system_id gigabyte_wmi_known_working_platforms[] = {
+	{
+		.matches = {
+			DMI_EXACT_MATCH(DMI_BOARD_VENDOR, "Gigabyte Technology Co., Ltd."),
+			DMI_EXACT_MATCH(DMI_BOARD_NAME, "X570 I AORUS PRO WIFI"),
+		},
+	},
+	{ }
+};
+
 static int gigabyte_wmi_probe(struct wmi_device *wdev, const void *context)
 {
 	struct device *hwmon_dev;
 	int ret;
+
+	if (!dmi_check_system(gigabyte_wmi_known_working_platforms)) {
+		if (force_load)
+			dev_warn(&wdev->dev, "Forcing loading on non-whitelisted platform");
+		else
+			return -ENODEV;
+	}
 
 	ret = gigabyte_wmi_validate_sensor_presence(wdev);
 	if (ret) {
