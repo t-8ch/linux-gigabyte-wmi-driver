@@ -22,9 +22,10 @@ Open questions:
 ## Installation
 
 * `make`
-* `sudo insmod ./gigabyte-wmi.ko`
+* `sudo insmod ./gigabyte-wmi.ko force_load=1`
 
 ## Testing
 
 * `cat /sys/class/wmi_bus/wmi_bus-PNP0C14\:00/DEADBEEF-2001-0000-00A0-C90629100000/hwmon/hwmon*/temp?_input`
 * `sensors`
+* Report your results on https://github.com/t-8ch/linux-gigabyte-wmi-driver/issues/1
