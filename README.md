@@ -1,7 +1,9 @@
 # Linux Driver for WMI on Gigabyte Mainboards
 
 Tested with
-* Gigabyte X570 I Aorus Pro Wifi (rev 1.0)
+* X570 I Aorus Pro Wifi (rev 1.0)
+* B550 Gaming X V2 (rev.1.x)
+* Z390 I AORUS PRO WIFI (rev. 1.0)
 
 References:
 * https://github.com/lm-sensors/lm-sensors/issues/154
