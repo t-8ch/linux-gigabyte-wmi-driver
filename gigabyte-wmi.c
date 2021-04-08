@@ -10,6 +10,7 @@
 #include <linux/wmi.h>
 
 #define GIGABYTE_WMI_GUID "DEADBEEF-2001-0000-00A0-C90629100000"
+#define NUM_TEMPERATURE_SENSORS 6
 
 enum gigabyte_wmi_commandtype {
 	GIGABYTE_WMI_BUILD_DATE_QUERY       =   0x1,
@@ -23,7 +24,8 @@ struct gigabyte_wmi_args {
 	u32 arg1;
 };
 
-static int gigabyte_wmi_perform_query(enum gigabyte_wmi_commandtype command,
+static int gigabyte_wmi_perform_query(struct wmi_device *wdev,
+				      enum gigabyte_wmi_commandtype command,
 				      struct gigabyte_wmi_args *args, struct acpi_buffer *out)
 {
 	const struct acpi_buffer in = {
@@ -31,22 +33,23 @@ static int gigabyte_wmi_perform_query(enum gigabyte_wmi_commandtype command,
 		.pointer = args,
 	};
 
-	acpi_status ret = wmi_evaluate_method(GIGABYTE_WMI_GUID, 0x0, command, &in, out);
+	acpi_status ret = wmidev_evaluate_method(wdev, 0x0, command, &in, out);
 
-	if (ret == AE_OK)
-		return 0;
-	else
+	if ACPI_FAILURE(ret)
 		return -EIO;
+
+	return 0;
 }
 
-static int gigabyte_wmi_query_integer(enum gigabyte_wmi_commandtype command,
+static int gigabyte_wmi_query_integer(struct wmi_device *wdev,
+				      enum gigabyte_wmi_commandtype command,
 				      struct gigabyte_wmi_args *args, u64 *res)
 {
 	union acpi_object *obj;
 	struct acpi_buffer result = { ACPI_ALLOCATE_BUFFER, NULL };
 	int ret;
 
-	ret = gigabyte_wmi_perform_query(command, args, &result);
+	ret = gigabyte_wmi_perform_query(wdev, command, args, &result);
 	if (ret)
 		goto out;
 	obj = result.pointer;
@@ -59,7 +62,7 @@ out:
 	return ret;
 }
 
-static int gigabyte_wmi_temperature(u8 sensor, long *res)
+static int gigabyte_wmi_temperature(struct wmi_device *wdev, u8 sensor, long *res)
 {
 	struct gigabyte_wmi_args args = {
 		.arg1 = sensor,
@@ -67,9 +70,9 @@ static int gigabyte_wmi_temperature(u8 sensor, long *res)
 	u64 temp;
 	acpi_status ret;
 
-	ret = gigabyte_wmi_query_integer(GIGABYTE_WMI_TEMPERATURE_QUERY, &args, &temp);
+	ret = gigabyte_wmi_query_integer(wdev, GIGABYTE_WMI_TEMPERATURE_QUERY, &args, &temp);
 	if (ret == 0) {
-		if (!temp)
+		if (temp == 0)
 			return -ENODEV;
 		*res = (s8)temp * 1000; // value is a signed 8-bit integer
 	}
@@ -79,7 +82,9 @@ static int gigabyte_wmi_temperature(u8 sensor, long *res)
 static int gigabyte_wmi_hwmon_read(struct device *dev, enum hwmon_sensor_types type,
 				   u32 attr, int channel, long *val)
 {
-	return gigabyte_wmi_temperature(channel, val);
+	struct wmi_device *wdev = dev_get_drvdata(dev);
+
+	return gigabyte_wmi_temperature(wdev, channel, val);
 }
 
 static umode_t gigabyte_wmi_hwmon_is_visible(const void *data, enum hwmon_sensor_types type,
@@ -96,7 +101,7 @@ static const struct hwmon_channel_info *gigabyte_wmi_hwmon_info[] = {
 			   HWMON_T_INPUT,
 			   HWMON_T_INPUT,
 			   HWMON_T_INPUT),
-	NULL,
+	NULL
 };
 
 static const struct hwmon_ops gigabyte_wmi_hwmon_ops = {
@@ -109,18 +114,38 @@ static const struct hwmon_chip_info gigabyte_wmi_hwmon_chip_info = {
 	.info = gigabyte_wmi_hwmon_info,
 };
 
+static int gigabyte_wmi_validate_sensor_presence(struct wmi_device *wdev)
+{
+	int working_sensors = 0, i;
+	long temp;
+
+	for (i = 0; i < NUM_TEMPERATURE_SENSORS; i++) {
+		if (!gigabyte_wmi_temperature(wdev, i, &temp))
+			working_sensors++;
+	}
+	return working_sensors ? 0 : -ENODEV;
+}
+
 static int gigabyte_wmi_probe(struct wmi_device *wdev, const void *context)
 {
-	struct device *hwmon_dev = devm_hwmon_device_register_with_info(&wdev->dev,
-			"gigabyte_wmi", NULL,
-			&gigabyte_wmi_hwmon_chip_info, NULL);
+	struct device *hwmon_dev;
+	int ret;
+
+	ret = gigabyte_wmi_validate_sensor_presence(wdev);
+	if (ret) {
+		dev_info(&wdev->dev, "No temperature sensors usable");
+		return ret;
+	}
+
+	hwmon_dev = devm_hwmon_device_register_with_info(&wdev->dev, "gigabyte_wmi", wdev,
+							 &gigabyte_wmi_hwmon_chip_info, NULL);
 
 	return PTR_ERR_OR_ZERO(hwmon_dev);
 }
 
 static const struct wmi_device_id gigabyte_wmi_id_table[] = {
 	{ GIGABYTE_WMI_GUID, NULL },
-	{ },
+	{ }
 };
 
 static struct wmi_driver gigabyte_wmi_driver = {
