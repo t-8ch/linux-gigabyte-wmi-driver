@@ -2,6 +2,7 @@
 
 Tested with
 * X570 I Aorus Pro Wifi (rev 1.0)
+* B550M DS3H
 * B550 Gaming X V2 (rev.1.x)
 * Z390 I AORUS PRO WIFI (rev. 1.0)
 
