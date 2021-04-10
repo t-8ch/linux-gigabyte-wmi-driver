@@ -191,5 +191,5 @@ module_wmi_driver(gigabyte_wmi_driver);
 
 MODULE_DEVICE_TABLE(wmi, gigabyte_wmi_id_table);
 MODULE_AUTHOR("Thomas Weißschuh <thomas@weissschuh.net>");
-MODULE_DESCRIPTION("Gigabyte Temperature WMI Driver");
+MODULE_DESCRIPTION("Gigabyte WMI temperature Driver");
 MODULE_LICENSE("GPL");
