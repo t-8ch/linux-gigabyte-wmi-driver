@@ -10,8 +10,8 @@
 #include <linux/module.h>
 #include <linux/wmi.h>
 
-#define GIGABYTE_WMI_GUID "DEADBEEF-2001-0000-00A0-C90629100000"
-#define NUM_TEMPERATURE_SENSORS 6
+#define GIGABYTE_WMI_GUID	"DEADBEEF-2001-0000-00A0-C90629100000"
+#define NUM_TEMPERATURE_SENSORS	6
 
 static bool force_load;
 module_param(force_load, bool, 0);
@@ -156,10 +156,9 @@ static int gigabyte_wmi_probe(struct wmi_device *wdev, const void *context)
 	int ret;
 
 	if (!dmi_check_system(gigabyte_wmi_known_working_platforms)) {
-		if (force_load)
-			dev_warn(&wdev->dev, "Forcing load on unknown platform");
-		else
+		if (!force_load)
 			return -ENODEV;
+		dev_warn(&wdev->dev, "Forcing load on unknown platform");
 	}
 
 	ret = gigabyte_wmi_validate_sensor_presence(wdev);
