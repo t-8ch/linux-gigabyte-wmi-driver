@@ -15,7 +15,7 @@
 
 static bool force_load;
 module_param(force_load, bool, 0);
-MODULE_PARM_DESC(force_load, "Force loading on non-whitelisted platform");
+MODULE_PARM_DESC(force_load, "Force loading on unknown platform");
 
 enum gigabyte_wmi_commandtype {
 	GIGABYTE_WMI_BUILD_DATE_QUERY       =   0x1,
@@ -157,7 +157,7 @@ static int gigabyte_wmi_probe(struct wmi_device *wdev, const void *context)
 
 	if (!dmi_check_system(gigabyte_wmi_known_working_platforms)) {
 		if (force_load)
-			dev_warn(&wdev->dev, "Forcing loading on non-whitelisted platform");
+			dev_warn(&wdev->dev, "Forcing load on unknown platform");
 		else
 			return -ENODEV;
 	}
