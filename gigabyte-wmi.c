@@ -14,7 +14,7 @@
 #define NUM_TEMPERATURE_SENSORS	6
 
 static bool force_load;
-module_param(force_load, bool, 0);
+module_param(force_load, bool, 0444);
 MODULE_PARM_DESC(force_load, "Force loading on unknown platform");
 
 enum gigabyte_wmi_commandtype {
