@@ -17,6 +17,8 @@ static bool force_load;
 module_param(force_load, bool, 0444);
 MODULE_PARM_DESC(force_load, "Force loading on unknown platform");
 
+static u8 usable_sensors_mask;
+
 enum gigabyte_wmi_commandtype {
 	GIGABYTE_WMI_BUILD_DATE_QUERY       =   0x1,
 	GIGABYTE_WMI_MAINBOARD_TYPE_QUERY   =   0x2,
@@ -94,7 +96,7 @@ static int gigabyte_wmi_hwmon_read(struct device *dev, enum hwmon_sensor_types t
 static umode_t gigabyte_wmi_hwmon_is_visible(const void *data, enum hwmon_sensor_types type,
 					     u32 attr, int channel)
 {
-	return 0444;
+	return usable_sensors_mask & BIT(channel) ? 0444  : 0;
 }
 
 static const struct hwmon_channel_info *gigabyte_wmi_hwmon_info[] = {
@@ -118,16 +120,17 @@ static const struct hwmon_chip_info gigabyte_wmi_hwmon_chip_info = {
 	.info = gigabyte_wmi_hwmon_info,
 };
 
-static int gigabyte_wmi_validate_sensor_presence(struct wmi_device *wdev)
+static u8 gigabyte_wmi_detect_sensor_usability(struct wmi_device *wdev)
 {
-	int working_sensors = 0, i;
+	int i;
 	long temp;
+	u8 r = 0;
 
 	for (i = 0; i < NUM_TEMPERATURE_SENSORS; i++) {
 		if (!gigabyte_wmi_temperature(wdev, i, &temp))
-			working_sensors++;
+			r |= BIT(i);
 	}
-	return working_sensors ? 0 : -ENODEV;
+	return r;
 }
 
 static const struct dmi_system_id gigabyte_wmi_known_working_platforms[] = {
@@ -153,7 +156,6 @@ static const struct dmi_system_id gigabyte_wmi_known_working_platforms[] = {
 static int gigabyte_wmi_probe(struct wmi_device *wdev, const void *context)
 {
 	struct device *hwmon_dev;
-	int ret;
 
 	if (!dmi_check_system(gigabyte_wmi_known_working_platforms)) {
 		if (!force_load)
@@ -161,10 +163,10 @@ static int gigabyte_wmi_probe(struct wmi_device *wdev, const void *context)
 		dev_warn(&wdev->dev, "Forcing load on unknown platform");
 	}
 
-	ret = gigabyte_wmi_validate_sensor_presence(wdev);
-	if (ret) {
+	usable_sensors_mask = gigabyte_wmi_detect_sensor_usability(wdev);
+	if (!usable_sensors_mask) {
 		dev_info(&wdev->dev, "No temperature sensors usable");
-		return ret;
+		return -ENODEV;
 	}
 
 	hwmon_dev = devm_hwmon_device_register_with_info(&wdev->dev, "gigabyte_wmi", wdev,
