@@ -42,7 +42,7 @@ static int gigabyte_wmi_perform_query(struct wmi_device *wdev,
 
 	acpi_status ret = wmidev_evaluate_method(wdev, 0x0, command, &in, out);
 
-	if ACPI_FAILURE(ret)
+	if (ACPI_FAILURE(ret))
 		return -EIO;
 
 	return 0;
@@ -191,5 +191,5 @@ module_wmi_driver(gigabyte_wmi_driver);
 
 MODULE_DEVICE_TABLE(wmi, gigabyte_wmi_id_table);
 MODULE_AUTHOR("Thomas Weißschuh <thomas@weissschuh.net>");
-MODULE_DESCRIPTION("Gigabyte WMI temperature Driver");
+MODULE_DESCRIPTION("Gigabyte WMI temperature driver");
 MODULE_LICENSE("GPL");
